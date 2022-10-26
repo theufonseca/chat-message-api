@@ -1,62 +1,51 @@
-﻿using Domain.UseCases.Test;
-using Infra.MySql;
-using Infra.MySql.Models;
-using MediatR;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Infra.RabbitMQ.Consumers
 {
     public class MessageReceiver : IHostedService
     {
-        private readonly RabbitMQSettings _settings;
-        private readonly IModel _channel;
-        private readonly IMediator _mediator;
+        private readonly RabbitMQSettings settings;
+        private readonly IModel channel;
 
-        public MessageReceiver(RabbitMQSettings settings, IModel channel, IMediator mediator)
+        public MessageReceiver(RabbitMQSettings settings, IModel channel)
         {
-            _settings = settings;
-            _channel = channel;
-            _mediator = mediator;
+            this.settings = settings;
+            this.channel = channel;
         }
 
-        private void SendMessage()
+        private void DoStuff()
         {
-            _channel.ExchangeDeclare(_settings.ExchangeName, _settings.ExchangeType);
-            var queueName = _channel.QueueDeclare().QueueName;
-            _channel.QueueBind(queueName, _settings.HostName, "msg-queue");
+            channel.ExchangeDeclare(exchange: settings.ExchangeName, type: settings.ExchangeType);
+            channel.QueueBind(queue: settings.QueueName, exchange: settings.ExchangeName, routingKey: "#.message-sent");
 
-            var consumerAsync = new AsyncEventingBasicConsumer(_channel);
+            var consumer = new EventingBasicConsumer(channel);
 
-            consumerAsync.Received += async (_, ea) =>
+            consumer.Received += (_, ea) =>
             {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
-                var messageModel = JsonSerializer.Deserialize<MessageModel>(message);
-
-                var task = Task.Run(() => _mediator.Send(new TestRequest { InValue = messageModel?.Message ?? "" }));
-                await task;
+                Console.WriteLine($"Message : {message}");
             };
 
-            _channel.BasicConsume(queueName, true, consumerAsync);
+            channel.BasicConsume(queue: settings.QueueName, autoAck: true, consumer: consumer);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            SendMessage();
+            DoStuff();
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _channel.Dispose();
+            channel.Dispose();
             return Task.CompletedTask;
         }
     }

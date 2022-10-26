@@ -21,24 +21,23 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
-//rabbitconfig
-var rabbitSection = builder.Configuration.GetSection("RabbitMQ");
-var rabbitSettings = new RabbitMQSettings();
-rabbitSection.Bind(rabbitSettings);
-builder.Services.AddSingleton<RabbitMQSettings>(rabbitSettings);
-builder.Services.AddSingleton<IConnectionFactory>(sp => new ConnectionFactory
+//rabbit config
+var configSection = builder.Configuration.GetSection("RabbitMQ");
+var settings = new RabbitMQSettings();
+configSection.Bind(settings);
+builder.Services.AddSingleton<RabbitMQSettings>(settings);
+
+builder.Services.AddSingleton<IConnectionFactory>(x => new ConnectionFactory
 {
-    HostName = rabbitSettings.HostName,
-    Port = 15672,
+    HostName = "localhost",
+    Port = 5672,
     UserName = "guest",
-    Password = "guest",
-    DispatchConsumersAsync = true
+    Password = "guest"
 });
-builder.Services.AddSingleton<ModelFactory>();
-builder.Services.AddSingleton(sp => sp.GetRequiredService<ModelFactory>().CreateChannel());
+
+builder.Services.AddSingleton<RabbitModelFactory>();
+builder.Services.AddSingleton(x => x.GetRequiredService<RabbitModelFactory>().CreateChannel());
 builder.Services.AddHostedService<MessageReceiver>();
-
-
 
 var app = builder.Build();
 
