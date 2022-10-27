@@ -33,6 +33,8 @@ namespace Infra.RabbitMQ.Consumers
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 var messageModel = JsonConvert.DeserializeObject<MessageSentModel>(message);
+
+                if()
             };
 
             channel.BasicConsume(queue: settings.QueueName, autoAck: true, consumer: consumer);

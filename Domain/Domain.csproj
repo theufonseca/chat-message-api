@@ -10,8 +10,4 @@
     <PackageReference Include="MediatR" Version="11.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="UseCases\Messages\" />
-  </ItemGroup>
-
 </Project>
