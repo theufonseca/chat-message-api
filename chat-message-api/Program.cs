@@ -1,4 +1,6 @@
+using Domain.Interfaces;
 using Infra.MySql;
+using Infra.MySql.Services;
 using Infra.RabbitMQ;
 using Infra.RabbitMQ.Consumers;
 using MediatR;
@@ -20,6 +22,8 @@ builder.Services.AddDbContext<DataContext>(options =>
     var connectionString = builder.Configuration.GetConnectionString("Default");
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
+
+builder.Services.AddSingleton<IMessageService, MessageService>();
 
 //rabbit config
 var configSection = builder.Configuration.GetSection("RabbitMQ");

@@ -1,4 +1,6 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
+using Domain.Interfaces;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -10,7 +12,7 @@ namespace Domain.UseCases.Messages
 {
     public class SendMessageRequest : IRequest<MessageSentModelResponse>
     {
-        public Message MessageSent { get; set; }
+        public MessageEntity MessageSent { get; set; }
     }
 
     public class MessageSentModelResponse
@@ -20,14 +22,39 @@ namespace Domain.UseCases.Messages
 
     public class SendMessageRequestHandler : IRequestHandler<SendMessageRequest, MessageSentModelResponse>
     {
-        public SendMessageRequestHandler()
-        {
+        private readonly IMessageService messageService;
 
+        public SendMessageRequestHandler(IMessageService messageService)
+        {
+            this.messageService = messageService;
         }
 
-        public Task<MessageSentModelResponse> Handle(SendMessageRequest request, CancellationToken cancellationToken)
+        public async Task<MessageSentModelResponse> Handle(SendMessageRequest request, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            ValidateRequest(request);
+            var message = request.MessageSent;
+            message.Sent = true;
+            message.Status = MessageStatus.Sent;
+
+            await messageService.Insert(message);
+
+
+            return new MessageSentModelResponse { Sucess = true };
+        }
+
+        private void ValidateRequest(SendMessageRequest request)
+        {
+            if (request.MessageSent is null)
+                throw new ArgumentException("Mensagem não localizada");
+
+            if (string.IsNullOrEmpty(request.MessageSent.MyNick))
+                throw new ArgumentException("MyNick precisa ser diferente de vazio e de nulo");
+
+            if (string.IsNullOrEmpty(request.MessageSent.FriendNick))
+                throw new ArgumentException("FriendNick precisa ser diferente de vazio e de nulo");
+
+            if (string.IsNullOrEmpty(request.MessageSent.Message))
+                throw new ArgumentException("MessageText precisa ser diferente de vazio e de nulo");
         }
     }
 }

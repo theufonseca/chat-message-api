@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using AutoMapper;
+using Domain.Entities;
+using Domain.UseCases.Messages;
+using MediatR;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -14,11 +18,15 @@ namespace Infra.RabbitMQ.Consumers
     {
         private readonly RabbitMQSettings settings;
         private readonly IModel channel;
+        private readonly IMediator mediator;
+        private readonly IMapper mapper;
 
-        public MessageReceiver(RabbitMQSettings settings, IModel channel)
+        public MessageReceiver(RabbitMQSettings settings, IModel channel, IMediator mediator, IMapper mapper)
         {
             this.settings = settings;
             this.channel = channel;
+            this.mediator = mediator;
+            this.mapper = mapper;
         }
 
         private void DoStuff()
@@ -31,10 +39,16 @@ namespace Infra.RabbitMQ.Consumers
             consumer.Received += (_, ea) =>
             {
                 var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-                var messageModel = JsonConvert.DeserializeObject<MessageSentModel>(message);
+                var messageString = Encoding.UTF8.GetString(body);
+                var messageModel = JsonConvert.DeserializeObject<MessageSentModel>(messageString);
 
-                if()
+                if (messageModel is null)
+                    return;
+
+                var message = mapper.Map<MessageEntity>(messageModel);
+                var task = Task.Run(() => mediator.Send(new SendMessageRequest { MessageSent = message }));
+                task.Wait();
+                var result = task.Result;
             };
 
             channel.BasicConsume(queue: settings.QueueName, autoAck: true, consumer: consumer);
