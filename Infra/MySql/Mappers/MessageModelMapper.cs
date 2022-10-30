@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Infra.MySql.Mappers
 {
-    public class MessageModelMapper : Profile
+    public class MessageModelMapper : AutoMapper.Profile
     {
         public MessageModelMapper()
         {

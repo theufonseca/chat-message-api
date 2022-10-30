@@ -1,9 +1,11 @@
 using Domain.Interfaces;
+using Infra.gRPC;
 using Infra.MySql;
 using Infra.MySql.Services;
 using Infra.RabbitMQ;
 using Infra.RabbitMQ.Consumers;
 using MediatR;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 
@@ -24,6 +26,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 });
 
 builder.Services.AddSingleton<IMessageService, MessageService>();
+builder.Services.AddTransient<ProfileClient>();
+builder.Services.AddTransient<IProfileService, ProfileService>();
 
 //rabbit config
 var configSection = builder.Configuration.GetSection("RabbitMQ");

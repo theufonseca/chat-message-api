@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option csharp_namespace = "chat_profile_grpc_client";
+
+package chat_profile;
+
+service Profile {
+	rpc Get(ProfileRequest) returns (ProfileResponse);
+}
+
+message ProfileRequest {
+	string id = 1;
+}
+
+message ProfileResponse {
+	string id = 1;
+	string Name = 2;
+	string Email = 3;
+	string Nick = 4;
+}

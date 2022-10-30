@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Infra.RabbitMQ.Mappers
 {
-    public class MessageSentMapper : Profile
+    public class MessageSentMapper : AutoMapper.Profile
     {
         public MessageSentMapper()
         {

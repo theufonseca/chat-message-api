@@ -23,10 +23,12 @@ namespace Domain.UseCases.Messages
     public class SendMessageRequestHandler : IRequestHandler<SendMessageRequest, MessageSentModelResponse>
     {
         private readonly IMessageService messageService;
+        private readonly IProfileService profileService;
 
-        public SendMessageRequestHandler(IMessageService messageService)
+        public SendMessageRequestHandler(IMessageService messageService, IProfileService profileService)
         {
             this.messageService = messageService;
+            this.profileService = profileService;
         }
 
         public async Task<MessageSentModelResponse> Handle(SendMessageRequest request, CancellationToken cancellationToken)
@@ -35,9 +37,17 @@ namespace Domain.UseCases.Messages
             var message = request.MessageSent;
             message.Sent = true;
             message.Status = MessageStatus.Sent;
-
             await messageService.Insert(message);
 
+            var profileSender = await profileService.Get(request.MessageSent.MyNick);
+            
+            if (profileSender is null || string.IsNullOrEmpty(profileSender.Id))
+                throw new ArgumentException("Perfil do enviador não localizado");
+
+            var profileReceiver = await profileService.Get(request.MessageSent.FriendNick);
+
+            if (profileReceiver is null || string.IsNullOrEmpty(profileReceiver.Id))
+                throw new ArgumentException("Perfil do receptor não localizado");
 
             return new MessageSentModelResponse { Sucess = true };
         }
