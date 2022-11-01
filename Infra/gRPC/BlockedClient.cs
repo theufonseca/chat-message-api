@@ -1,4 +1,5 @@
-﻿using Grpc.Net.Client;
+﻿using chat_contacts_grpc;
+using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -8,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace Infra.gRPC
 {
-    public class ProfileClient : IDisposable
+    public class BlockedClient : IDisposable
     {
-        public readonly chat_profile_grpc_client.Profile.ProfileClient profileClient;
+        public readonly Blocked.BlockedClient blockedClient;
         private readonly GrpcChannel channel;
-        public ProfileClient(IConfiguration configuration)
+
+        public BlockedClient(IConfiguration configuration)
         {
-            var grpcServer = configuration.GetSection("Grpc:ProfileServer").Value;
+            var grpcServer = configuration.GetSection("Grpc:ContactServer").Value;
             channel = GrpcChannel.ForAddress(grpcServer);
-            profileClient = new chat_profile_grpc_client.Profile.ProfileClient(channel);
-            
+            blockedClient = new Blocked.BlockedClient(channel);
         }
 
         public void Dispose()

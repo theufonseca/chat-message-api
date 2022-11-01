@@ -28,6 +28,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 builder.Services.AddSingleton<IMessageService, MessageService>();
 builder.Services.AddTransient<ProfileClient>();
 builder.Services.AddTransient<IProfileService, ProfileService>();
+builder.Services.AddTransient<BlockedClient>();
+builder.Services.AddTransient<IBlockedService, BlockedService>();
 
 //rabbit config
 var configSection = builder.Configuration.GetSection("RabbitMQ");

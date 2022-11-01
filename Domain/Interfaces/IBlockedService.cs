@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace Domain.Interfaces
 {
-    public interface IMessageService
+    public interface IBlockedService
     {
-        Task<int> Insert(MessageEntity message);
-        Task UpdateStatus(int messageId, int status);
+        Task<Blockeds> GetBlockeds(string id);
     }
 }

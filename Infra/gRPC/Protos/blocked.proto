@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option csharp_namespace = "chat_contacts_grpc";
+
+package blocked;
+
+service Blocked {
+	rpc getBlockedList(getBlockedListRequest) returns (getBlockedListResponse);
+}
+
+message getBlockedListRequest {
+	string id = 1;
+}
+
+message getBlockedList {
+	string id = 1;
+	string name = 2;
+	string email = 3;
+	string nick = 4;
+}
+
+message getBlockedListResponse {
+	repeated getBlockedList blockedList = 1;
+}

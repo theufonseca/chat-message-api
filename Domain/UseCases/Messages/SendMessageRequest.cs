@@ -24,11 +24,14 @@ namespace Domain.UseCases.Messages
     {
         private readonly IMessageService messageService;
         private readonly IProfileService profileService;
+        private readonly IBlockedService blockedService;
 
-        public SendMessageRequestHandler(IMessageService messageService, IProfileService profileService)
+        public SendMessageRequestHandler(IMessageService messageService, IProfileService profileService,
+            IBlockedService blockedService)
         {
             this.messageService = messageService;
             this.profileService = profileService;
+            this.blockedService = blockedService;
         }
 
         public async Task<MessageSentModelResponse> Handle(SendMessageRequest request, CancellationToken cancellationToken)
@@ -37,19 +40,40 @@ namespace Domain.UseCases.Messages
             var message = request.MessageSent;
             message.Sent = true;
             message.Status = MessageStatus.Sent;
-            await messageService.Insert(message);
+            var messageSentId = await messageService.Insert(message);
 
             var profileSender = await profileService.Get(request.MessageSent.MyNick);
-            
+
             if (profileSender is null || string.IsNullOrEmpty(profileSender.Id))
-                throw new ArgumentException("Perfil do enviador não localizado");
+                throw new ArgumentException("Perfil do remetente não localizado");
 
             var profileReceiver = await profileService.Get(request.MessageSent.FriendNick);
 
             if (profileReceiver is null || string.IsNullOrEmpty(profileReceiver.Id))
-                throw new ArgumentException("Perfil do receptor não localizado");
+                throw new ArgumentException("Perfil do destinatario não localizado");
+
+            var blockeds = await blockedService.GetBlockeds(request.MessageSent.FriendNick);
+
+            if (blockeds.BlockedList is not null && blockeds.BlockedList.Any(x => x.Id == request.MessageSent.MyNick))
+                throw new ArgumentException("Perfil do remetente bloqueado pelo destinatario");
+
+            await messageService.Insert(BuildFriendMessage(message));
+            await messageService.UpdateStatus(messageSentId, (int)MessageStatus.Deliveried);
 
             return new MessageSentModelResponse { Sucess = true };
+        }
+
+        private MessageEntity BuildFriendMessage(MessageEntity messageEntity)
+        {
+            return new MessageEntity
+            {
+                MyNick = messageEntity.FriendNick,
+                FriendNick = messageEntity.MyNick,
+                Message = messageEntity.Message,
+                Date = messageEntity.Date,
+                Sent = !messageEntity.Sent,
+                Status = MessageStatus.Deliveried
+            };
         }
 
         private void ValidateRequest(SendMessageRequest request)
@@ -65,6 +89,9 @@ namespace Domain.UseCases.Messages
 
             if (string.IsNullOrEmpty(request.MessageSent.Message))
                 throw new ArgumentException("MessageText precisa ser diferente de vazio e de nulo");
+
+            if (request.MessageSent.MyNick == request.MessageSent.FriendNick)
+                throw new ArgumentException("Não é possível enviar mensagem pra você mesmo");
         }
     }
 }
