@@ -39,10 +39,10 @@ builder.Services.AddSingleton<RabbitMQSettings>(settings);
 
 builder.Services.AddSingleton<IConnectionFactory>(x => new ConnectionFactory
 {
-    HostName = "localhost",
-    Port = 5672,
-    UserName = "guest",
-    Password = "guest"
+    HostName = settings.HostName,
+    Port = settings.port,
+    UserName = settings.UserName,
+    Password = settings.Password
 });
 
 builder.Services.AddSingleton<RabbitModelFactory>();
